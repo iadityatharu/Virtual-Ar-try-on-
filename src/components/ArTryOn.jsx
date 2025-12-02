@@ -109,7 +109,6 @@ const ArTryOn = () => {
           await tf.ready();
         }
 
-        // Importing FaceMesh ensures mediapipe assets are available; config below uses CDN.
         void FaceMesh;
 
         let model;
