@@ -6,7 +6,7 @@ import "@tensorflow/tfjs-converter";
 import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 import { FaceMesh } from "@mediapipe/face_mesh";
 
-// Expanded lip contours for better upper/lower coverage
+
 const LIP_OUTER = [
   61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84,
   181, 91, 146,
