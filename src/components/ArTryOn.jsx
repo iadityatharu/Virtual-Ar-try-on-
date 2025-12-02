@@ -100,7 +100,6 @@ const ArTryOn = () => {
 
     const loadModel = async () => {
       try {
-        // Prefer WebGL, but fall back to CPU if unavailable
         try {
           await tf.setBackend("webgl");
           await tf.ready();
