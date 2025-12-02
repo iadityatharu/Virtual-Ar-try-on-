@@ -155,7 +155,6 @@ const ArTryOn = () => {
     };
 
     const startDetectionLoop = () => {
-      // Live loop removed; we run detection only on capture.
     };
 
     const bootstrap = async () => {
