@@ -76,7 +76,6 @@ const ArTryOn = () => {
         });
 
         const { videoWidth, videoHeight } = video;
-        // Lock element dimensions once metadata is ready to avoid zero-size frames
         video.width = videoWidth;
         video.height = videoHeight;
 
