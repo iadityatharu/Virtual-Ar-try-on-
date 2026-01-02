@@ -5,7 +5,7 @@ import "@tensorflow/tfjs-backend-cpu";
 import "@tensorflow/tfjs-converter";
 import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 import { FaceMesh } from "@mediapipe/face_mesh";
-
+import { FaCamera } from "react-icons/fa6";
 
 const LIP_OUTER = [
   61, 185, 40, 39, 37, 0, 267, 269, 270, 409, 291, 375, 321, 405, 314, 17, 84,
@@ -23,6 +23,7 @@ const PRESET_LIPSTICKS = [
 const ArTryOn = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const snapshotCanvasRef = useRef(null);
   const modelRef = useRef(null);
   const runtimeRef = useRef("mediapipe");
   const eyelashImgRef = useRef(null);
@@ -41,6 +42,7 @@ const ArTryOn = () => {
   const [processedDataUrl, setProcessedDataUrl] = useState(null);
   const [faceDetected, setFaceDetected] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     const img = new Image();
@@ -48,6 +50,16 @@ const ArTryOn = () => {
     img.onload = () => {
       eyelashImgRef.current = img;
     };
+  }, []);
+
+  // Handle window resize for responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -61,8 +73,8 @@ const ArTryOn = () => {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: "user",
-            width: { ideal: 640 },
-            height: { ideal: 480 },
+            width: { ideal: isMobile ? 480 : 640 },
+            height: { ideal: isMobile ? 360 : 480 },
           },
           audio: false,
         });
@@ -154,6 +166,78 @@ const ArTryOn = () => {
     };
 
     const startDetectionLoop = () => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const model = modelRef.current;
+
+      if (!video || !canvas || !model) return;
+
+      const ctx = canvas.getContext("2d");
+      let animationId;
+
+      const detect = async () => {
+        if (!videoRef.current || !canvasRef.current || !modelRef.current) {
+          return;
+        }
+
+        try {
+          const predictions = await modelRef.current.estimateFaces(video, {
+            flipHorizontal: false,
+          });
+
+          const { videoWidth, videoHeight } = video;
+          canvas.width = videoWidth;
+          canvas.height = videoHeight;
+
+          ctx.clearRect(0, 0, videoWidth, videoHeight);
+
+          if (predictions && predictions.length > 0) {
+            setFaceDetected(true);
+            const keypoints = predictions[0].keypoints;
+            const landmarks = keypoints.map((kp) => [kp.x, kp.y, kp.z || 0]);
+
+            const flippedPts = landmarks.map(([x, y, z]) => [
+              videoWidth - x,
+              y,
+              z,
+            ]);
+
+            drawLipstick(
+              ctx,
+              flippedPts,
+              videoWidth,
+              videoHeight,
+              lipstickColorRef.current,
+              lipstickOpacityRef.current
+            );
+
+            // Draw eyelashes
+            if (eyelashesEnabledRef.current && eyelashImgRef.current) {
+              drawEyelashes(
+                ctx,
+                flippedPts,
+                videoWidth,
+                videoHeight,
+                eyelashImgRef.current
+              );
+            }
+          } else {
+            setFaceDetected(false);
+          }
+        } catch (err) {
+          console.error("Detection error:", err);
+        }
+
+        animationId = requestAnimationFrame(detect);
+      };
+
+      detect();
+
+      return () => {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+      };
     };
 
     const bootstrap = async () => {
@@ -190,25 +274,28 @@ const ArTryOn = () => {
 
   const handleSnapshot = async () => {
     const video = videoRef.current;
-    const canvas = canvasRef.current;
+    const snapCanvas = snapshotCanvasRef.current;
     const model = modelRef.current;
-    if (!video || !canvas || !model) return;
+    if (!video || !snapCanvas || !model) return;
 
     const width = video.videoWidth || 640;
     const height = video.videoHeight || 480;
-    canvas.width = width;
-    canvas.height = height;
+    snapCanvas.width = width;
+    snapCanvas.height = height;
 
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, width, height);
-    const raw = canvas.toDataURL("image/png");
+    const ctx = snapCanvas.getContext("2d");
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, -width, 0, width, height);
+    ctx.restore();
+    const raw = snapCanvas.toDataURL("image/png");
     setSnapshotDataUrl(raw);
 
     setIsProcessing(true);
     setFaceDetected(false);
 
     try {
-      const predictions = await model.estimateFaces(canvas, {
+      const predictions = await model.estimateFaces(video, {
         flipHorizontal: runtimeRef.current === "tfjs",
         staticImageMode: true,
       });
@@ -217,24 +304,29 @@ const ArTryOn = () => {
         const pts = toPoints(predictions[0]);
         if (pts) {
           setFaceDetected(true);
-          ctx.drawImage(video, 0, 0, width, height);
+          ctx.clearRect(0, 0, width, height);
+          ctx.save();
+          ctx.scale(-1, 1);
+          ctx.drawImage(video, -width, 0, width, height);
+          ctx.restore();
+          const flippedPts = pts.map(([x, y, z]) => [width - x, y, z]);
           drawLipstick(
             ctx,
-            pts,
+            flippedPts,
             width,
             height,
             lipstickColorRef.current,
             lipstickOpacityRef.current
           );
           if (eyelashesEnabledRef.current) {
-            drawEyelashes(ctx, pts, eyelashImgRef.current);
+            drawEyelashes(ctx, flippedPts, eyelashImgRef.current);
           }
         }
       } else {
         setFaceDetected(false);
       }
 
-      const processed = canvas.toDataURL("image/png");
+      const processed = snapCanvas.toDataURL("image/png");
       setProcessedDataUrl(processed);
     } catch (err) {
       console.error("Snapshot prediction error:", err);
@@ -247,110 +339,288 @@ const ArTryOn = () => {
   };
 
   return (
-    <section className="ar-card">
-      <div className="status-bar">
-        <span className={`status-dot ${cameraReady ? "ok" : ""}`} />
-        <span>{cameraReady ? "Camera ready" : "Waiting for camera..."}</span>
-        <span>•</span>
-        <span className={`status-dot ${isModelLoaded ? "ok" : ""}`} />
-        <span>
-          {isModelLoaded ? "Face model ready" : "Loading face model..."}
-        </span>
-        <span>•</span>
-        <span className={`status-dot ${faceDetected ? "ok" : ""}`} />
-        <span>{faceDetected ? "Face detected" : "No face detected"}</span>
-      </div>
-
+    <div
+      style={{
+        padding: isMobile ? "12px" : "20px",
+        maxWidth: "1200px",
+        width: "100%",
+      }}
+    >
       {error && <div className="error-box">{error}</div>}
 
-      <div className="view-area">
-        <video ref={videoRef} autoPlay playsInline muted />
-        <canvas ref={canvasRef} />
-      </div>
-
-      <div className="controls">
-        <div className="control-row">
-          <label htmlFor="shade">Preset lipstick shades</label>
-          <select id="shade" value={selectedShade} onChange={handleShadeChange}>
-            {PRESET_LIPSTICKS.map((shade) => (
-              <option key={shade.id} value={shade.id}>
-                {shade.name} ({shade.hex})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="control-row">
-          <label htmlFor="color">Custom lipstick color</label>
-          <input
-            id="color"
-            type="color"
-            value={lipstickColor}
-            onChange={(e) => setLipstickColor(e.target.value)}
-          />
-        </div>
-
-        <div className="control-row wide">
-          <label htmlFor="opacity">
-            Lipstick opacity: {(lipstickOpacity * 100).toFixed(0)}%
-          </label>
-          <input
-            id="opacity"
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={lipstickOpacity}
-            onChange={(e) => setLipstickOpacity(Number(e.target.value))}
-          />
-        </div>
-
-        <div className="toggle-row">
-          <input
-            id="eyelashes"
-            type="checkbox"
-            checked={eyelashesEnabled}
-            onChange={(e) => setEyelashesEnabled(e.target.checked)}
-          />
-          <label htmlFor="eyelashes">Enable eyelashes overlay</label>
-        </div>
-
-        <button
-          className="btn wide"
-          type="button"
-          onClick={handleSnapshot}
-          disabled={isProcessing || !isModelLoaded}
+      <div
+        style={{
+          display: "flex",
+          gap: isMobile ? "20px" : "30px",
+          alignItems: "flex-start",
+          flexDirection: isMobile ? "column" : "row",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+            width: isMobile ? "100%" : "640px",
+            maxWidth: "100%",
+            flexShrink: 0,
+          }}
         >
-          {isProcessing ? "Processing..." : "Capture & Apply"}
-        </button>
-
-        <div className="snapshot wide">
-          <label>Snapshot vs. Try-on</label>
-          <div className="snapshot-pair">
-            <div>
-              <div className="thumb-label">Original</div>
-              {snapshotDataUrl ? (
-                <img src={snapshotDataUrl} alt="Original snapshot" />
-              ) : (
-                <span style={{ color: "#7f8491", fontSize: "14px" }}>
-                  Capture a frame to see it here.
-                </span>
-              )}
+          <div style={{ position: "relative" }}>
+            <div
+              className="status-bar"
+              style={{
+                marginBottom: "12px",
+                justifyContent: "flex-start",
+                fontSize: isMobile ? "12px" : "14px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span className={`status-dot ${cameraReady ? "ok" : ""}`} />
+              <span>
+                {cameraReady ? "Camera ready" : "Waiting for camera..."}
+              </span>
+              <span>•</span>
+              <span className={`status-dot ${isModelLoaded ? "ok" : ""}`} />
+              <span>
+                {isModelLoaded ? "Face model ready" : "Loading face model..."}
+              </span>
+              <span>•</span>
+              <span className={`status-dot ${faceDetected ? "ok" : ""}`} />
+              <span>{faceDetected ? "Face detected" : "No face detected"}</span>
             </div>
+
+            <div
+              style={{
+                position: "relative",
+                background: "#000",
+                borderRadius: "8px",
+                overflow: "hidden",
+                height: "300px",
+              }}
+            >
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{
+                  transform: "scaleX(-1)",
+                  display: "block",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+              <canvas
+                ref={canvasRef}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  pointerEvents: "none",
+                }}
+              />
+              <canvas ref={snapshotCanvasRef} style={{ display: "none" }} />
+              <button
+                className="btn"
+                type="button"
+                onClick={handleSnapshot}
+                disabled={isProcessing || !isModelLoaded}
+                style={{
+                  position: "absolute",
+                  bottom: isMobile ? "12px" : "20px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  padding: isMobile ? "10px 24px" : "12px 32px",
+                  fontSize: isMobile ? "14px" : "16px",
+                  fontWeight: "600",
+                  zIndex: 10,
+                }}
+              >
+                {isProcessing ? "Processing..." : <FaCamera />}
+              </button>
+            </div>
+          </div>
+
+          {processedDataUrl && (
+            <div
+              style={{
+                position: "relative",
+                background: "#000",
+                borderRadius: "8px",
+                overflow: "hidden",
+                height: isMobile ? "auto" : "300px",
+                aspectRatio: isMobile ? "4/3" : "auto",
+              }}
+            >
+              <img
+                src={processedDataUrl}
+                alt="With Try-On Applied"
+                style={{ display: "block", width: "100%" }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  left: "10px",
+                  background: "rgba(0, 0, 0, 0.7)",
+                  color: "#fff",
+                  padding: "6px 12px",
+                  borderRadius: "4px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                }}
+              >
+                With Try-On Applied
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div style={{ flex: 1, width: "100%" }}>
+          <div style={{ marginBottom: "24px" }}>
+            <h2
+              style={{
+                margin: "0 0 8px 0",
+                color: "#f7f7f7",
+                fontSize: isMobile ? "20px" : "24px",
+                fontWeight: "700",
+              }}
+            >
+              AR Lipstick & Eyelash Try-On Demo
+            </h2>
+            <p
+              style={{
+                margin: 0,
+                color: "#cfd1d8",
+                fontSize: "14px",
+                lineHeight: "1.6",
+              }}
+            >
+              Turn on your webcam, pick a lipstick shade, and toggle virtual
+              eyelashes. Everything runs fully in the browser.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: isMobile ? "16px" : "20px",
+            }}
+          >
             <div>
-              <div className="thumb-label">With lipstick/eyelashes</div>
-              {processedDataUrl ? (
-                <img src={processedDataUrl} alt="Processed snapshot" />
-              ) : (
-                <span style={{ color: "#7f8491", fontSize: "14px" }}>
-                  After capture, the processed image appears here.
+              <h3
+                style={{
+                  margin: "0 0 12px 0",
+                  color: "#e2e8f0",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                }}
+              >
+                Preset Lipstick Shades
+              </h3>
+              <div
+                style={{
+                  display: "flex",
+                  gap: isMobile ? "10px" : "12px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {PRESET_LIPSTICKS.map((shade) => (
+                  <div
+                    key={shade.id}
+                    onClick={() => {
+                      setSelectedShade(shade.id);
+                      setLipstickColor(shade.hex);
+                    }}
+                    style={{
+                      width: isMobile ? "45px" : "50px",
+                      height: isMobile ? "45px" : "50px",
+                      borderRadius: "50%",
+                      backgroundColor: shade.hex,
+                      cursor: "pointer",
+                      border:
+                        selectedShade === shade.id
+                          ? "3px solid #fff"
+                          : "3px solid transparent",
+                      boxShadow:
+                        selectedShade === shade.id
+                          ? "0 0 0 2px #ff6b9d, 0 4px 12px rgba(0,0,0,0.3)"
+                          : "0 2px 8px rgba(0,0,0,0.2)",
+                      transition: "all 0.2s ease",
+                    }}
+                    title={shade.name}
+                    onMouseEnter={(e) => {
+                      if (!isMobile && selectedShade !== shade.id) {
+                        e.currentTarget.style.transform = "scale(1.1)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isMobile) {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="opacity"
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  color: "#cfd1d8",
+                  fontSize: "14px",
+                }}
+              >
+                Lipstick Opacity:{" "}
+                <span style={{ color: "#ff6b9d", fontWeight: "700" }}>
+                  {(lipstickOpacity * 100).toFixed(0)}%
                 </span>
-              )}
+              </label>
+              <input
+                id="opacity"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={lipstickOpacity}
+                style={{ cursor: "pointer", width: "100%" }}
+                onChange={(e) => setLipstickOpacity(Number(e.target.value))}
+              />
+            </div>
+
+            <div>
+              <h3
+                style={{
+                  margin: "0 0 12px 0",
+                  color: "#e2e8f0",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                }}
+              >
+                Additional Effects
+              </h3>
+              <div className="toggle-row">
+                <input
+                  id="eyelashes"
+                  type="checkbox"
+                  checked={eyelashesEnabled}
+                  onChange={(e) => setEyelashesEnabled(e.target.checked)}
+                />
+                <label htmlFor="eyelashes">Enable Eyelashes Overlay</label>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
