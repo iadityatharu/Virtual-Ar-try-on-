@@ -552,29 +552,22 @@ function drawLipstick(ctx, outerPoints, innerPoints, color, opacity) {
   if (!ctx || !outerPoints || outerPoints.length < 3) return;
 
   ctx.save();
-  ctx.globalAlpha = opacity;
   ctx.fillStyle = color;
+  ctx.globalAlpha = opacity;
   ctx.beginPath();
   drawSmoothClosedPath(ctx, outerPoints);
   if (innerPoints && innerPoints.length > 2) {
     drawSmoothClosedPath(ctx, [...innerPoints].reverse());
   }
   ctx.fill("evenodd");
-
-  ctx.globalCompositeOperation = "source-over";
-  ctx.filter = "blur(1px)";
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  drawSmoothClosedPath(ctx, outerPoints);
-  ctx.stroke();
-
-  ctx.filter = "none";
-  ctx.strokeStyle = "rgba(0,0,0,0.45)";
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  drawSmoothClosedPath(ctx, outerPoints);
-  ctx.stroke();
+  // ctx.globalCompositeOperation = "source-over";
+  // ctx.filter = "blur(0px)";
+  // ctx.strokeStyle = color;
+  // ctx.globalAlpha = Math.max(0.1, opacity * 0.8);
+  // ctx.lineWidth = 4;
+  // ctx.beginPath();
+  // drawSmoothClosedPath(ctx, outerPoints);
+  // ctx.stroke();
   ctx.restore();
 }
 
