@@ -1,4 +1,4 @@
-* {
+*{
   box-sizing: border-box;
 }
 
@@ -190,7 +190,6 @@ body {
   color: #bfc3d1;
 }
 
-/* Mobile-first responsive design */
 @media (max-width: 768px) {
   .page {
     padding: 16px 12px 32px;
