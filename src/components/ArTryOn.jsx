@@ -15,7 +15,10 @@ const LIP_INNER = [
   81, 80, 191,
 ];
 const LIP_INDICES = [...LIP_OUTER, ...LIP_INNER];
-const PRESET_LIPSTICKS = [{ id: 4, name: "Deep Plum", hex: "#5a1033" }];
+const PRESET_LIPSTICKS = [
+  { id: 4, name: "Deep Plum", hex: "#5a1033" },
+  { id: 4, name: "Dark Red", hex: "#70090aff" },
+];
 const MIRROR_DISPLAY = true;
 const LIP_SMOOTHING_ALPHA = 0.45;
 
@@ -552,22 +555,29 @@ function drawLipstick(ctx, outerPoints, innerPoints, color, opacity) {
   if (!ctx || !outerPoints || outerPoints.length < 3) return;
 
   ctx.save();
-  ctx.fillStyle = color;
   ctx.globalAlpha = opacity;
+  ctx.fillStyle = color;
   ctx.beginPath();
   drawSmoothClosedPath(ctx, outerPoints);
   if (innerPoints && innerPoints.length > 2) {
     drawSmoothClosedPath(ctx, [...innerPoints].reverse());
   }
   ctx.fill("evenodd");
+
   // ctx.globalCompositeOperation = "source-over";
-  // ctx.filter = "blur(0px)";
+  // ctx.filter = "blur(1px)";
   // ctx.strokeStyle = color;
-  // ctx.globalAlpha = Math.max(0.1, opacity * 0.8);
-  // ctx.lineWidth = 4;
+  // ctx.lineWidth = 3;
   // ctx.beginPath();
   // drawSmoothClosedPath(ctx, outerPoints);
   // ctx.stroke();
+
+  ctx.filter = "none";
+  ctx.strokeStyle = "rgba(0,0,0,0.40)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  drawSmoothClosedPath(ctx, outerPoints);
+  ctx.stroke();
   ctx.restore();
 }
 
