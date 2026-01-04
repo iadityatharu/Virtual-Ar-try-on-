@@ -190,6 +190,88 @@ body {
   color: #bfc3d1;
 }
 
+.skeleton-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 3, 6, 0.8);
+  border-radius: inherit;
+  z-index: 8;
+}
+
+.skeleton-card {
+  width: min(340px, 90%);
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+  background: #0c0c12;
+  position: relative;
+  overflow: hidden;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.55);
+}
+
+.skeleton-card::after {
+  content: \"\";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 45%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+}
+
+.skeleton-bar {
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  background: #18171f;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-bar.short {
+  width: 65%;
+}
+
+.skeleton-bar.medium {
+  width: 80%;
+}
+
+.skeleton-bar.long {
+  width: 90%;
+}
+
+.skeleton-bar::before {
+  content: \"\";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-100%);
+  animation: skeletonShimmer 1.6s linear infinite;
+}
+
+@keyframes skeletonShimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
 @media (max-width: 768px) {
   .page {
     padding: 16px 12px 32px;
