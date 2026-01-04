@@ -147,7 +147,8 @@ const ArTryOn = () => {
               refineLandmarks: true,
               maxFaces: 1,
               selfieMode: true,
-              solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh",
+              solutionPath:
+                "https://unpkg.com/@mediapipe/face_mesh@0.4.1633559619",
             }
           );
           runtimeRef.current = "mediapipe";
