@@ -1,5 +1,5 @@
 import React from "react";
-import ArTryOn from "./components/ArTryOn";
+import ArTryOnPage from "./components/ArTryOn/ArTryOnPage";
 
 const App = () => {
   return (
@@ -9,7 +9,7 @@ const App = () => {
         alt="logo"
         style={{ height: "60px", width: "150px" }}
       />
-      <ArTryOn />
+      <ArTryOnPage />
     </div>
   );
 };
