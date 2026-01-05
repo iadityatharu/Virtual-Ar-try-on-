@@ -707,7 +707,7 @@ const PRESET_LIPSTICKS = [
   { id: 5, name: "Dark Red", hex: "#70090aff" },
 ];
 const MIRROR_DISPLAY = true;
-const LIP_SMOOTHING_ALPHA = 0.45;
+const LIP_SMOOTHING_ALPHA = 0.1;
 
 const ArTryOn = () => {
   const wrapperRef = useRef(null);
@@ -1103,7 +1103,7 @@ const ArTryOn = () => {
                 gap: "8px",
                 flexWrap: "wrap",
                 fontSize: isMobile ? "12px" : "14px",
-                color: "#cfd1d8",
+                color: "black",
               }}
             >
               <span
@@ -1152,103 +1152,147 @@ const ArTryOn = () => {
             </div>
 
             <div
-              ref={wrapperRef}
               style={{
-                position: "relative",
-                background: "#000",
-                borderRadius: "8px",
-                overflow: "hidden",
-                height: "300px",
+                display: "flex",
+                gap: "20px",
+                alignItems: "flex-start",
               }}
             >
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
+              <div
+                ref={wrapperRef}
+                className="view-area"
                 style={{
-                  transform: "scaleX(-1)",
-                  display: "block",
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  visibility: isLoading ? "hidden" : "visible",
+                  height: "500px",
+                  width: "350px",
+                  transform: " translateX(-90px)",
                 }}
-              />
-              <canvas
-                ref={canvasRef}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  pointerEvents: "none",
-                  visibility: isLoading ? "hidden" : "visible",
-                }}
-              />
-              {isLoading && (
-                <div
+              >
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  style={{
+                    transform: "scaleX(-1)",
+                    display: "block",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    visibility: isLoading ? "hidden" : "visible",
+                  }}
+                />
+                <canvas
+                  ref={canvasRef}
                   style={{
                     position: "absolute",
                     top: 0,
                     left: 0,
                     width: "100%",
                     height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    backgroundColor: "rgba(0, 0, 0, 0.8)",
+                    pointerEvents: "none",
+                    visibility: isLoading ? "hidden" : "visible",
                   }}
-                >
+                />
+                {isLoading && (
                   <div
                     style={{
-                      backgroundColor: "#1e293b",
-                      borderRadius: "8px",
-                      padding: "20px",
-                      width: "80%",
-                      maxWidth: "300px",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "500px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: "rgba(0, 0, 0, 0.8)",
                     }}
                   >
                     <div
                       style={{
-                        height: "8px",
-                        backgroundColor: "#334155",
-                        borderRadius: "4px",
-                        marginBottom: "12px",
-                        width: "60%",
-                      }}
-                    />
-                    <div
-                      style={{
-                        height: "8px",
-                        backgroundColor: "#334155",
-                        borderRadius: "4px",
-                        marginBottom: "12px",
+                        backgroundColor: "#1e293b",
+                        borderRadius: "8px",
+                        padding: "20px",
                         width: "80%",
+                        maxWidth: "300px",
                       }}
-                    />
-                    <div
-                      style={{
-                        height: "8px",
-                        backgroundColor: "#334155",
-                        borderRadius: "4px",
-                        width: "40%",
-                      }}
-                    />
+                    >
+                      <div
+                        style={{
+                          height: "8px",
+                          backgroundColor: "#334155",
+                          borderRadius: "4px",
+                          marginBottom: "12px",
+                          width: "60%",
+                        }}
+                      />
+                      <div
+                        style={{
+                          height: "8px",
+                          backgroundColor: "#334155",
+                          borderRadius: "4px",
+                          marginBottom: "12px",
+                          width: "80%",
+                        }}
+                      />
+                      <div
+                        style={{
+                          height: "8px",
+                          backgroundColor: "#334155",
+                          borderRadius: "4px",
+                          width: "40%",
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              <div
+                className="view-area1"
+                style={{
+                  height: "500px",
+                  width: "350px",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  padding: "10px",
+                  boxSizing: "border-box",
+                  backgroundImage: "url('/wood.png')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <img
+                  src="/model.jpeg"
+                  alt="Model Reference"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "8px",
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        <div style={{ flex: 1, width: "100%" }}>
+        <div
+          className="controls"
+          style={{
+            flex: 1,
+            width: "100%",
+            marginLeft: isMobile ? 0 : "100px",
+          }}
+        >
           <div style={{ marginBottom: "24px" }}>
             <h2
               style={{
                 margin: "0 0 8px 0",
-                color: "#f7f7f7",
+                color: "black",
                 fontSize: isMobile ? "20px" : "24px",
                 fontWeight: "700",
               }}
@@ -1258,7 +1302,7 @@ const ArTryOn = () => {
             <p
               style={{
                 margin: 0,
-                color: "#cfd1d8",
+                color: "grey",
                 fontSize: "14px",
                 lineHeight: "1.6",
               }}
@@ -1279,7 +1323,7 @@ const ArTryOn = () => {
               <h3
                 style={{
                   margin: "0 0 12px 0",
-                  color: "#e2e8f0",
+                  color: "black",
                   fontSize: "16px",
                   fontWeight: "600",
                 }}
@@ -1326,12 +1370,12 @@ const ArTryOn = () => {
                 style={{
                   display: "block",
                   marginBottom: "8px",
-                  color: "#cfd1d8",
+                  color: "black",
                   fontSize: "14px",
                 }}
               >
                 Lipstick Opacity:{" "}
-                <span style={{ color: "#ff6b9d", fontWeight: "700" }}>
+                <span style={{ color: "grey", fontWeight: "700" }}>
                   {(lipstickOpacity * 100).toFixed(0)}%
                 </span>
               </label>
@@ -1450,11 +1494,21 @@ function buildSmoothedDisplayLandmarks(
     if (!mapped) return;
     const prevPoint = previous[index];
     if (prevPoint) {
+      // Calculate movement distance
+      const dx = mapped[0] - prevPoint[0];
+      const dy = mapped[1] - prevPoint[1];
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Adaptive alpha: faster movement = more responsive
+      let alpha = LIP_SMOOTHING_ALPHA;
+      if (distance > 3) {
+        // Large movement detected - increase responsiveness
+        alpha = Math.min(1, LIP_SMOOTHING_ALPHA + 0.3);
+      }
+
       smoothed[index] = [
-        LIP_SMOOTHING_ALPHA * mapped[0] +
-          (1 - LIP_SMOOTHING_ALPHA) * prevPoint[0],
-        LIP_SMOOTHING_ALPHA * mapped[1] +
-          (1 - LIP_SMOOTHING_ALPHA) * prevPoint[1],
+        alpha * mapped[0] + (1 - alpha) * prevPoint[0],
+        alpha * mapped[1] + (1 - alpha) * prevPoint[1],
       ];
     } else {
       smoothed[index] = mapped;
